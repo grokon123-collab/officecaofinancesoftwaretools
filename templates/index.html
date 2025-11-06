@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Office of the CAO Finance Department Software Tools</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background-color: #f5f7fa;
+      color: #222;
+    }
+
+    /* HEADER STYLES */
+    header {
+      background: linear-gradient(to right, #2b4c7e, #004b8d);
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 15px 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    header img {
+      height: 60px;
+      margin-right: 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      line-height: 1.3em;
+    }
+
+    /* NAV BAR */
+    nav {
+      background-color: #002b5c;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 10px 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+
+    nav a.active,
+    nav a:hover {
+      background: #004b8d;
+    }
+
+    /* MAIN CONTENT */
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 8px;
+      padding: 30px 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #003366;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #003366;
+      color: white;
+      transition: 0.3s ease;
+    }
+
+    button:hover:enabled {
+      background-color: #0055a5;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+    }
+
+    legend {
+      font-weight: bold;
+      color: #003366;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .search-box {
+      flex-grow: 1;
+      margin-right: 10px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+    }
+
+    .small-btn {
+      background-color: #0055a5;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .small-btn:hover {
+      background-color: #003f7d;
+    }
+
+    .dept-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 8px 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 10px 15px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .dept-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+    }
+
+    #button-container {
+      text-align: center;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #003366;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <!-- Replace logo.png with your UofT logo path -->
+    <img src="{{ url_for('static', filename='logo.svg') }}" alt="University of Toronto Logo">
+    <h1>Office of the CAO<br>Finance Department Software Tools</h1>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="#" class="active">Crawler</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <h2>UofT Staff Directory Crawler</h2>
+
+    <form id="crawlerForm">
+      <fieldset>
+        <legend>Select Departments (all selected by default)</legend>
+
+        <div class="control-row">
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search departments...">
+          </div>
+          <button type="button" id="toggleAllBtn" class="small-btn">Deselect All</button>
+        </div>
+
+        <div class="dept-list" id="deptList">
+          {% for dept in departments %}
+            <label class="dept-item">
+              <input type="checkbox" name="departments" value="{{ dept }}" checked>
+              {{ dept }}
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div id="button-container">
+        <button type="button" id="runBtn">Run Script</button>
+        <button type="button" id="downloadBtn" disabled>Download Result</button>
+      </div>
+
+      <div class="spinner" id="spinner"></div>
+      <p id="status"></p>
+    </form>
+  </main>
+
+  <script>
+    const runBtn = document.getElementById("runBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const toggleAllBtn = document.getElementById("toggleAllBtn");
+    const status = document.getElementById("status");
+    const spinner = document.getElementById("spinner");
+    const searchInput = document.getElementById("searchInput");
+    const deptList = document.getElementById("deptList");
+
+    let allSelected = true;
+
+    toggleAllBtn.addEventListener("click", () => {
+      const checkboxes = document.querySelectorAll('input[name="departments"]');
+      checkboxes.forEach(cb => cb.checked = !allSelected);
+      allSelected = !allSelected;
+      toggleAllBtn.textContent = allSelected ? "Deselect All" : "Select All";
+    });
+
+    searchInput.addEventListener("input", () => {
+      const filter = searchInput.value.toLowerCase();
+      const labels = deptList.querySelectorAll(".dept-item");
+      labels.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        label.style.display = text.includes(filter) ? "flex" : "none";
+      });
+    });
+
+    runBtn.addEventListener("click", async () => {
+      const selected = Array.from(document.querySelectorAll('input[name="departments"]:checked'))
+                            .map(cb => cb.value);
+
+      if (selected.length === 0) {
+        alert("Please select at least one department.");
+        return;
+      }
+
+      status.textContent = "Starting crawler...";
+      spinner.style.display = "block";
+      runBtn.disabled = true;
+      downloadBtn.disabled = true;
+
+      const res = await fetch("/run-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ departments: selected })
+      });
+
+      const data = await res.json();
+      status.textContent = "Crawler is running. Please wait...";
+
+      const checkInterval = setInterval(async () => {
+        const check = await fetch("/is-done");
+        const { done } = await check.json();
+
+        if (done) {
+          clearInterval(checkInterval);
+          spinner.style.display = "none";
+          status.textContent = "Crawl complete! Your file is downloading...";
+          window.location.href = "/download-result";
+          setTimeout(() => {
+            status.textContent = "Report downloaded. Ready for another run.";
+            runBtn.disabled = false;
+            downloadBtn.disabled = true;
+          }, 3000);
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
+
