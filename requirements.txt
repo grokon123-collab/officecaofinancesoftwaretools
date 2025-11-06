@@ -1,0 +1,15 @@
+flask
+requests
+beautifulsoup4
+subprocess
+threading
+os
+json
+shutil
+sys
+time
+getpass
+pandas
+glob
+selenium
+webdriver_manager
